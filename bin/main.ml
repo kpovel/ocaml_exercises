@@ -1,18 +1,10 @@
-let split list position =
-  let rec aux list position current_position =
-    match list with
-    | [] -> ([], [])
-    | h :: t ->
-        if position > current_position then
-          let x, y = aux t position (current_position + 1) in
-          (h :: x, y)
-        else ([ h ], t)
-  in
-  aux list position 1
+let rec remove_at position list =
+  match list with
+  | [] -> []
+  | hd :: l -> if position = 0 then l else hd :: remove_at (position - 1) l
 
 let () =
   Printf.printf "\n";
-  let x, y = split [ "a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j" ] 3 in
-  Printf.printf "%s" (String.concat ", " x);
-  Printf.printf "\n";
-  Printf.printf "%s" (String.concat ", " y)
+  let result = remove_at 1 [ "a"; "b"; "c"; "d" ] in
+  List.iter (fun x -> Printf.printf "%s, " x) result;
+  Printf.printf "\n"
