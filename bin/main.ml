@@ -1,11 +1,8 @@
-let rec insert_at item n list =
-  match list with
-  | [] -> []
-  | hd :: list ->
-      if n = 0 then item :: hd :: list else hd :: insert_at item (n - 1) list
+let rec range i n =
+  match i <= n with true -> i :: range (i + 1) n | false -> []
 
 let () =
   Printf.printf "\n";
-  let result = insert_at "alfa" 1 [ "a"; "b"; "c"; "d" ] in
-  List.iter (fun x -> Printf.printf "%s, " x) result;
+  let result = range 4 9 in
+  List.iter (fun x -> Printf.printf "%d, " x) result;
   Printf.printf "\n"
