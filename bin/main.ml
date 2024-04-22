@@ -1,10 +1,11 @@
-let rec remove_at position list =
+let rec insert_at item n list =
   match list with
   | [] -> []
-  | hd :: l -> if position = 0 then l else hd :: remove_at (position - 1) l
+  | hd :: list ->
+      if n = 0 then item :: hd :: list else hd :: insert_at item (n - 1) list
 
 let () =
   Printf.printf "\n";
-  let result = remove_at 1 [ "a"; "b"; "c"; "d" ] in
+  let result = insert_at "alfa" 1 [ "a"; "b"; "c"; "d" ] in
   List.iter (fun x -> Printf.printf "%s, " x) result;
   Printf.printf "\n"
