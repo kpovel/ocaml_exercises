@@ -1,6 +1,7 @@
-let rec pow x n = if n = 1 then x else x * pow x (n - 1)
+let isconsonant char =
+  match char with 'a' | 'e' | 'i' | 'o' | 'u' -> true | _ -> false
 
 let () =
-  let result = pow 5 3 in
-  Printf.printf "%d" result;
+  let result = isconsonant 'l' in
+  Printf.printf "%b" result;
   Printf.printf "\n"
