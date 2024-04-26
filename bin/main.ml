@@ -1,10 +1,6 @@
-let rec lotto_select n m =
-  match n > 1 with
-  | true -> Random.int m :: lotto_select (n - 1) m
-  | false -> [ Random.int m ]
+let rec pow x n = if n = 1 then x else x * pow x (n - 1)
 
 let () =
-  Printf.printf "\n";
-  let result = lotto_select 6 49 in
-  List.iter (fun x -> Printf.printf "%d, " x) result;
+  let result = pow 5 3 in
+  Printf.printf "%d" result;
   Printf.printf "\n"
