@@ -1,5 +1,3 @@
-open Base
-
 let rec take n l =
   match n = 0 with
   | true -> []
@@ -39,20 +37,10 @@ let rec msort l =
     merge (msort left) (msort right)
 ;;
 
-let rec list_of_elements n =
-  match n = 0 with
-  | true -> []
-  | false -> n :: list_of_elements (n - 1)
-;;
-
 let () =
-  let list_with_length = [ 1_000; 10_000; 100_000; 1_000_000 ] in
-  List.iter
-    ~f:(fun x ->
-      let start = Unix.gettimeofday () in
-      let _ = msort @@ list_of_elements x in
-      let stop = Unix.gettimeofday () in
-      Stdio.printf "Execution time of %i element: %fs\n%!" x (stop -. start))
-    list_with_length
+  msort [ [ 'o'; 'n'; 'e' ]; [ 't'; 'w'; 'o' ]; [ 't'; 'h'; 'r'; 'e'; 'e' ] ]
+  |> List.sort (fun x y -> Stdlib.compare x y)
+  |> List.map (fun x -> String.concat ";" (List.map (String.make 1) x))
+  |> List.iter (fun x -> Stdio.printf "[%s]," x)
 in
 Stdio.printf "\n"
