@@ -1,102 +1,92 @@
-type 'a tree =
-  | Br of 'a * 'a tree * 'a tree
-  | Lf
+open Core
 
-type 'a newtree = Br' of 'a * 'a newtree list
-
-let rec sizen (Br' (_, tl)) =
-  List.map (fun x -> sizen x) tl |> List.fold_left (fun acc x -> acc + x) 1
+let rec read_dict () =
+  Out_channel.(flush stdout);
+  let i = In_channel.(input_line stdin) in
+  match i with
+  | Some i when not (String.equal i "") ->
+    let i = Int.of_string i in
+    let name = In_channel.(input_line_exn stdin) in
+    (i, name) :: read_dict ()
+  | _ -> []
 ;;
 
-let rec sumn (Br' (x, tl)) = List.map sumn tl |> List.fold_left ( + ) x
-let rec mapn (Br' (x, tl)) f = Br' (f x, List.map (fun x -> mapn x f) tl)
-
-let rec pp_tree pp_elem fmt = function
-  | Lf -> Format.fprintf fmt "Lf"
-  | Br (x, left, right) ->
-    Format.fprintf
-      fmt
-      "Br (%a, %a, %a)"
-      pp_elem
-      x
-      (pp_tree pp_elem)
-      left
-      (pp_tree pp_elem)
-      right
+let entry_to_channel ch (k, v) =
+  Out_channel.output_string ch (string_of_int k);
+  Out_channel.output_char ch '\n';
+  Out_channel.output_string ch v;
+  Out_channel.output_char ch '\n'
 ;;
 
-let pp_tuple fmt (i, s) = Format.fprintf fmt "(%d, %s)" i s
+let dict_to_channel ch d = List.iter ~f:(entry_to_channel ch) d
 
-let rec size tr =
-  match tr with
-  | Lf -> 0
-  | Br (_, l, r) -> 1 + size l + size r
+let dict_to_file filename dict =
+  let ch = Out_channel.create filename in
+  dict_to_channel ch dict;
+  Out_channel.close ch
 ;;
 
-let rec total tr =
-  match tr with
-  | Lf -> 0
-  | Br (x, l, r) -> x + total l + total r
+let entry_of_channel ch =
+  let k = In_channel.input_line_exn ch |> Int.of_string in
+  let v = In_channel.input_line_exn ch in
+  k, v
 ;;
 
-let rec max_depth tr =
-  match tr with
-  | Lf -> 0
-  | Br (_, l, r) -> 1 + Int.max (max_depth l) (max_depth r)
+let rec dict_of_channel ch =
+  try
+    let e = entry_of_channel ch in
+    e :: dict_of_channel ch
+  with
+  | End_of_file -> []
 ;;
 
-let rec list_of_tree tr =
-  match tr with
-  | Lf -> []
-  | Br (x, l, r) -> list_of_tree l @ [ x ] @ list_of_tree r
+let dict_of_file filename =
+  let ch = In_channel.create filename in
+  let dict = dict_of_channel ch in
+  In_channel.close ch;
+  dict
 ;;
 
-let rec lookup tr k =
-  match tr with
-  | Lf -> None
-  | Br ((k', v), l, r) ->
-    if k = k' then Some v else if k' < k then lookup l k else lookup r k
+let print_int_list l =
+  List.map ~f:Int.to_string l |> String.concat ~sep:"; " |> printf "[ %s ]\n"
 ;;
 
-let rec insert tr k v =
-  match tr with
-  | Lf -> Br ((k, v), Lf, Lf)
-  | Br ((k', v'), l, r) ->
-    if k = k'
-    then Br ((k, v), l, r)
-    else if k < k'
-    then Br ((k', v'), insert l k v, r)
-    else Br ((k', v'), l, insert r k v)
+let xtable filename =
+  let x = In_channel.(input_line_exn stdin) |> Int.of_string in
+  let rec range x =
+    match x with
+    | 0 -> []
+    | x -> range (x - 1) @ [ x ]
+  in
+  let rangex = range x in
+  let table =
+    List.map ~f:(fun i -> List.map ~f:(( * ) i) rangex) rangex
+    |> List.map ~f:(List.map ~f:Int.to_string)
+    |> List.map ~f:(String.concat ~sep:"\t")
+    |> String.concat ~sep:"\n"
+    |> sprintf "%s\n"
+  in
+  let ch = Out_channel.create filename in
+  Out_channel.output_string ch table;
+  Out_channel.close ch
 ;;
 
-let rec exists tr v =
-  match tr with
-  | Lf -> false
-  | Br (v', l, r) -> v = v' || exists l v || exists r v
+let file_lines filename =
+  let ch = In_channel.create filename in
+  let file = In_channel.input_lines ch in
+  In_channel.close ch;
+  List.length file
 ;;
 
-let rec flip tr =
-  match tr with
-  | Lf -> Lf
-  | Br (x, l, r) -> Br (x, flip r, flip l)
+let copy_file filename1 filename2 =
+  let file = In_channel.read_all filename1 in
+  let ch = Out_channel.create filename2 in
+  Out_channel.output_string ch file;
+  Out_channel.close ch
 ;;
 
-let rec same_shape tr tr' =
-  match tr, tr' with
-  | Lf, Lf -> true
-  | Br (_, l, r), Br (_, l', r') -> same_shape l l' && same_shape r r'
-  | _ -> false
-;;
-
-let rec tree_of_list l =
-  match l with
-  | [] -> Lf
-  | (k, v) :: tl -> insert (tree_of_list tl) k v
-;;
-
-let rec merge t t' = tree_of_list (list_of_tree t @ list_of_tree t')
-
-let () =
-  let tr = Br' (4, [ Br' (2, [ Br' (0, [ Br' (6, [ Br' (9, []) ]) ]) ]) ]) in
-  sizen tr |> Format.printf "%d\n"
-;;
+let () = copy_file "table.txt" "table2.txt"
+(*file_lines "table.txt" |> printf "%d\n"*)
+(*xtable "table.txt"*)
+(*read_dict () |> dict_to_file "foo";*)
+(*dict_of_file "foo" |> List.iter ~f:(fun (k, v) -> printf "(%d, %s)\n" k v)*)
