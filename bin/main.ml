@@ -1,92 +1,72 @@
 open Core
 
-let rec read_dict () =
-  Out_channel.(flush stdout);
-  let i = In_channel.(input_line stdin) in
-  match i with
-  | Some i when not (String.equal i "") ->
-    let i = Int.of_string i in
-    let name = In_channel.(input_line_exn stdin) in
-    (i, name) :: read_dict ()
-  | _ -> []
+let print_histogram arr =
+  Array.iteri arr ~f:(fun i x ->
+    printf
+      "For character '%c' (character number %d) the count is %d.()\n"
+      (char_of_int i)
+      i
+      x)
 ;;
 
-let entry_to_channel ch (k, v) =
-  Out_channel.output_string ch (string_of_int k);
-  Out_channel.output_char ch '\n';
-  Out_channel.output_string ch v;
-  Out_channel.output_char ch '\n'
+let channel_statistics ch =
+  let file = In_channel.input_all ch in
+  let lines = ref 0 in
+  let words = ref 0 in
+  let sentences = ref 0 in
+  let characters = ref 0 in
+  let histogram = Array.init 256 ~f:(fun _ -> 0) in
+  String.iter file ~f:(fun c ->
+    characters := !characters + 1;
+    let i = int_of_char c in
+    histogram.(i) <- histogram.(i) + 1;
+    match c with
+    | '\n' ->
+      lines := !lines + 1;
+      words := !words + 1
+    | '.' | '?' | '!' -> sentences := !sentences + 1
+    | ' ' -> words := !words + 1
+    | _ -> ());
+  printf
+    "There were %d lines, making up %d characters with %d words in %d sentences.\n"
+    !lines
+    !characters
+    !words
+    !sentences;
+  print_histogram histogram
 ;;
 
-let dict_to_channel ch d = List.iter ~f:(entry_to_channel ch) d
-
-let dict_to_file filename dict =
-  let ch = Out_channel.create filename in
-  dict_to_channel ch dict;
-  Out_channel.close ch
+let rec forloop f t exp =
+  match f <= t with
+  | true ->
+    exp f;
+    forloop (f + 1) t exp
+  | false -> ()
 ;;
 
-let entry_of_channel ch =
-  let k = In_channel.input_line_exn ch |> Int.of_string in
-  let v = In_channel.input_line_exn ch in
-  k, v
+let sum arr =
+  let sum = ref 0 in
+  for i = 0 to Array.length arr - 1 do
+    sum := !sum + arr.(i)
+  done;
+  !sum
 ;;
 
-let rec dict_of_channel ch =
-  try
-    let e = entry_of_channel ch in
-    e :: dict_of_channel ch
-  with
-  | End_of_file -> []
+let to_lowercase char =
+  let ascii = int_of_char char in
+  match ascii with
+  | x when x >= 65 && x <= 90 -> char_of_int (ascii + 32)
+  | _ -> char
 ;;
 
-let dict_of_file filename =
-  let ch = In_channel.create filename in
-  let dict = dict_of_channel ch in
-  In_channel.close ch;
-  dict
+let to_uppercase char =
+  let ascii = int_of_char char in
+  match ascii with
+  | x when x >= 97 && x <= 122 -> char_of_int (ascii - 32)
+  | _ -> char
 ;;
 
-let print_int_list l =
-  List.map ~f:Int.to_string l |> String.concat ~sep:"; " |> printf "[ %s ]\n"
-;;
-
-let xtable filename =
-  let x = In_channel.(input_line_exn stdin) |> Int.of_string in
-  let rec range x =
-    match x with
-    | 0 -> []
-    | x -> range (x - 1) @ [ x ]
-  in
-  let rangex = range x in
-  let table =
-    List.map ~f:(fun i -> List.map ~f:(( * ) i) rangex) rangex
-    |> List.map ~f:(List.map ~f:Int.to_string)
-    |> List.map ~f:(String.concat ~sep:"\t")
-    |> String.concat ~sep:"\n"
-    |> sprintf "%s\n"
-  in
-  let ch = Out_channel.create filename in
-  Out_channel.output_string ch table;
-  Out_channel.close ch
-;;
-
-let file_lines filename =
-  let ch = In_channel.create filename in
-  let file = In_channel.input_lines ch in
-  In_channel.close ch;
-  List.length file
-;;
-
-let copy_file filename1 filename2 =
-  let file = In_channel.read_all filename1 in
-  let ch = Out_channel.create filename2 in
-  Out_channel.output_string ch file;
-  Out_channel.close ch
-;;
-
-let () = copy_file "table.txt" "table2.txt"
-(*file_lines "table.txt" |> printf "%d\n"*)
-(*xtable "table.txt"*)
-(*read_dict () |> dict_to_file "foo";*)
-(*dict_of_file "foo" |> List.iter ~f:(fun (k, v) -> printf "(%d, %s)\n" k v)*)
+let () = to_lowercase 'Z' |> printf "%c\n"
+(*let ch = In_channel.create "gregor.txt" in*)
+(*channel_statistics ch;*)
+(*In_channel.close ch*)
