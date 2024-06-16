@@ -1,3 +1,0 @@
-(test
- (name test_exercises)
- (libraries alcotest exercises))

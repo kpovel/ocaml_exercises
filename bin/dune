@@ -1,4 +1,0 @@
-(executable
- (public_name exercises)
- (name main)
- (libraries exercises base stdio unix core))
